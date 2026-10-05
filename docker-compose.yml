@@ -1,0 +1,18 @@
+services:
+  ollama:
+    image: ollama/ollama
+    volumes: [ollama:/root/.ollama]
+    restart: unless-stopped
+    # Com GPU NVIDIA, descomente:
+    # deploy: {resources: {reservations: {devices: [{capabilities: [gpu]}]}}}
+  app:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: llama3.2:3b
+      PANEL_PASSWORD: ${PANEL_PASSWORD:-}   # defina para proteger o painel
+    volumes: [data:/data]
+    depends_on: [ollama]
+    restart: unless-stopped
+volumes: {ollama: {}, data: {}}

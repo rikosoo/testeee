@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bot WhatsApp Clínica</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#1c2733;--mut:#6b7a89;--bd:#e1e6eb;--ac:#128c7e;--bad:#d64545;--ok:#1f9d55}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1519;--card:#18222a;--tx:#e7edf2;--mut:#8a9aa8;--bd:#2a3742}}
+*{box-sizing:border-box}body{margin:0;font:15px system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+h1{font-size:18px;margin:0;flex:1}
+nav{display:flex;gap:4px;padding:8px 20px;flex-wrap:wrap}
+nav button{background:none;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--mut);font:inherit}
+nav button.on{background:var(--ac);color:#fff}
+main{padding:0 20px 40px;max-width:1000px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:16px}
+button.p{background:var(--ac);color:#fff;border:0;padding:9px 16px;border-radius:8px;cursor:pointer;font:inherit}
+button.s{background:none;border:1px solid var(--bd);color:var(--tx);padding:7px 12px;border-radius:8px;cursor:pointer;font:inherit}
+input,textarea,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+textarea{min-height:220px}label{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}
+.pill{padding:3px 10px;border-radius:99px;font-size:12px;color:#fff;background:var(--mut)}
+.pill.ok{background:var(--ok)}.pill.bad{background:var(--bad)}
+.switch{display:flex;align-items:center;gap:10px;font-weight:600}
+.switch input{display:none}
+.switch span{width:52px;height:28px;background:var(--mut);border-radius:99px;position:relative;cursor:pointer;transition:.2s}
+.switch span:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:var(--ok)}.switch input:checked+span:after{left:27px}
+#qr{display:block;margin:12px auto;width:280px;height:280px;background:#fff;padding:8px;border-radius:8px}
+.chat{display:grid;grid-template-columns:260px 1fr;gap:12px;min-height:460px}
+@media(max-width:700px){.chat{grid-template-columns:1fr}}
+.list{border-right:1px solid var(--bd);overflow:auto;max-height:520px}
+.list div{padding:10px;cursor:pointer;border-bottom:1px solid var(--bd)}.list div.on{background:var(--bg)}
+.msgs{display:flex;flex-direction:column;gap:6px;overflow:auto;max-height:420px;padding:6px}
+.b{max-width:75%;padding:8px 11px;border-radius:10px;white-space:pre-wrap}
+.b.patient{background:var(--bg);align-self:flex-start}.b.bot{background:#d9fdd3;color:#111;align-self:flex-end}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-bottom:1px solid var(--bd)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.row>*{flex:1;min-width:120px}
+.hide{display:none}.mut{color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🩺 Bot WhatsApp — Clínica</h1>
+  <span id="pWa" class="pill">WhatsApp: …</span>
+  <span id="pAi" class="pill">IA: …</span>
+  <label class="switch" style="margin:0"><input type="checkbox" id="bot"><span></span><b id="botLbl">Bot desligado</b></label>
+</header>
+<nav id="tabs">
+  <button data-t="conn" class="on">Conexão</button><button data-t="chat">Conversas</button>
+  <button data-t="agenda">Agenda</button><button data-t="cfg">Configurações</button>
+</nav>
+<main>
+<section id="conn" class="tab">
+  <div class="card" style="text-align:center">
+    <div id="connMsg" class="mut">Carregando…</div>
+    <img id="qr" class="hide" alt="QR Code">
+    <p class="mut hide" id="qrHelp">No celular: WhatsApp → Aparelhos conectados → Conectar um aparelho → aponte para o QR Code.</p>
+    <button class="p" id="btnConnect">Conectar WhatsApp</button>
+    <button class="s hide" id="btnLogout">Desconectar</button>
+  </div>
+  <div class="card mut" id="err"></div>
+</section>
+
+<section id="chat" class="tab hide"><div class="card chat">
+  <div class="list" id="contacts"></div>
+  <div><div class="row" style="margin-bottom:8px"><b id="chatName" style="flex:3">Selecione uma conversa</b>
+    <label class="switch" style="margin:0"><input type="checkbox" id="pause"><span></span>Pausar bot aqui</label></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="row" style="margin-top:8px"><input id="txt" placeholder="Responder manualmente…" style="flex:5"><button class="p" id="send">Enviar</button></div>
+  </div>
+</div></section>
+
+<section id="agenda" class="tab hide">
+  <div class="card"><b>Nova consulta manual</b>
+    <div class="row"><div><label>Paciente</label><input id="aName"></div><div><label>Telefone (55DDDNÚMERO)</label><input id="aPhone"></div>
+    <div><label>Data</label><input type="date" id="aDate"></div><div><label>Horário</label><select id="aTime"></select></div>
+    <button class="p" id="aAdd" style="flex:0">Agendar</button></div></div>
+  <div class="card"><table id="appts"></table></div>
+</section>
+
+<section id="cfg" class="tab hide"><div class="card">
+  <div class="row"><div><label>URL do Ollama</label><input id="ollamaUrl"></div><div><label>Modelo</label><input id="model" list="models"><datalist id="models"></datalist></div></div>
+  <div class="row"><div><label>Duração da consulta (min)</label><input type="number" id="slotMinutes"></div>
+  <div><label>Dias à frente na agenda</label><input type="number" id="daysAhead"></div>
+  <div><label>Atraso da resposta (ms)</label><input type="number" id="replyDelayMs"></div></div>
+  <label>Horário de atendimento (formato 08:00-18:00, vazio = fechado)</label>
+  <div class="row" id="hours"></div>
+  <label>Instruções da IA (como tratar o paciente, informações da clínica, preços…)</label>
+  <textarea id="systemPrompt"></textarea>
+  <p><button class="p" id="saveCfg">Salvar</button> <span id="saved" class="mut"></span></p>
+</div></section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
